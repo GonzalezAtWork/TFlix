@@ -15,16 +15,16 @@ function initializeUI() {
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
-  
+
   // Enable navigation mode
   document.body.classList.add('tflix-navigation-mode');
-  
+
   // Initialize focus on a logical starting element
   initializeFocus();
-  
+
   // Setup event listeners for media control keys
   setupMediaControlListeners();
-  
+
   // Initialize video player enhancements when a video is played
   setupVideoPlayerObserver();
 }
@@ -39,20 +39,20 @@ function initializeFocus() {
     document.querySelector('nav a'),
     document.querySelector('.navigation a'),
     document.querySelector('header a'),
-    
+
     // Content cards/items
     document.querySelector('.movie-card'),
     document.querySelector('.content-item'),
     document.querySelector('.film-item'),
-    
+
     // Fallback to any clickable element
     document.querySelector('a'),
     document.querySelector('button')
   ];
-  
+
   // Find the first valid element from our priority list
   const firstElement = initialElements.find(el => el !== null);
-  
+
   if (firstElement) {
     firstElement.classList.add('tflix-focused');
     firstElement.focus();
@@ -66,7 +66,7 @@ function initializeFocus() {
  */
 function ensureElementIsVisible(element) {
   if (!element) return;
-  
+
   element.scrollIntoView({
     behavior: 'smooth',
     block: 'nearest',
@@ -78,7 +78,7 @@ function ensureElementIsVisible(element) {
  * Setup media control key event listeners
  */
 function setupMediaControlListeners() {
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     // Handle media control keys
     switch (e.key) {
       case 'MediaPlayPause':
@@ -122,26 +122,26 @@ function setupMediaControlListeners() {
  */
 function handleBackButton(e) {
   e.preventDefault(); // Prevent default back behavior
-  
-  // Special handling for Cineby.gd
-  if (window.location.hostname.includes('cineby.gd')) {
+
+  // Special handling for Cineby.sc
+  if (window.location.hostname.includes('cineby')) {
     // Check if we're in a video player mode
-    if (videoElement && videoElement.parentElement && 
-        (document.fullscreenElement || 
-         videoElement.closest('.video-player-container') ||
-         videoElement.style.position === 'fixed' ||
-         videoElement.parentElement.style.position === 'fixed')) {
-      
+    if (videoElement && videoElement.parentElement &&
+      (document.fullscreenElement ||
+        videoElement.closest('.video-player-container') ||
+        videoElement.style.position === 'fixed' ||
+        videoElement.parentElement.style.position === 'fixed')) {
+
       // If in fullscreen, exit it
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {
           // Silent error handling
         });
       }
-      
+
       // Stop video playback
       videoElement.pause();
-      
+
       // Try to find and click a close button
       const closeButton = document.querySelector('.close-button, .back-button, .exit-button');
       if (closeButton) {
@@ -155,25 +155,25 @@ function handleBackButton(e) {
           window.history.back();
         }
       }
-      
+
       return;
     }
   }
-  
+
   // Default handling for other cases
-  if (videoElement && videoElement.parentElement && 
-      (document.fullscreenElement || videoElement.closest('.video-player-container'))) {
-    
+  if (videoElement && videoElement.parentElement &&
+    (document.fullscreenElement || videoElement.closest('.video-player-container'))) {
+
     // If in fullscreen, exit it
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {
         // Silent error handling
       });
     }
-    
+
     // Stop video playback
     videoElement.pause();
-    
+
     // If there's a close button, click it
     const closeButton = document.querySelector('.close-button, .back-button, .exit-button');
     if (closeButton) {
@@ -182,10 +182,10 @@ function handleBackButton(e) {
       // Try to navigate back to the main content
       window.history.back();
     }
-    
+
     return;
   }
-  
+
   // Handle regular navigation back
   if (window.history.length > 1) {
     window.history.back();
@@ -203,19 +203,19 @@ function handleBackButton(e) {
  */
 function setupVideoPlayerObserver() {
   // Create an observer instance
-  const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
+  const observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
       if (mutation.addedNodes.length) {
         // Check if a video element was added
-        const addedVideo = Array.from(mutation.addedNodes).find(node => 
-          node.nodeName === 'VIDEO' || 
+        const addedVideo = Array.from(mutation.addedNodes).find(node =>
+          node.nodeName === 'VIDEO' ||
           (node.querySelector && node.querySelector('video'))
         );
-        
+
         if (addedVideo) {
-          videoElement = addedVideo.nodeName === 'VIDEO' ? 
+          videoElement = addedVideo.nodeName === 'VIDEO' ?
             addedVideo : addedVideo.querySelector('video');
-          
+
           if (videoElement) {
             enhanceVideoPlayer(videoElement);
           }
@@ -223,13 +223,13 @@ function setupVideoPlayerObserver() {
       }
     });
   });
-  
+
   // Start observing the document body for DOM changes
-  observer.observe(document.body, { 
-    childList: true, 
-    subtree: true 
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
   });
-  
+
   // Also check for existing video elements
   videoElement = document.querySelector('video');
   if (videoElement) {
@@ -243,24 +243,24 @@ function setupVideoPlayerObserver() {
  */
 function enhanceVideoPlayer(video) {
   videoElement = video;
-  
+
   // Fix common video playback issues
   fixVideoPlaybackIssues(video);
-  
+
   // Create custom player controls
   createPlayerControls();
-  
+
   // Add event listeners for video element
   videoElement.addEventListener('play', updatePlayerState);
   videoElement.addEventListener('pause', updatePlayerState);
   videoElement.addEventListener('timeupdate', updateProgress);
   videoElement.addEventListener('ended', onVideoEnded);
-  
+
   // Add error handling
   videoElement.addEventListener('error', handleVideoError);
-  
+
   // Show controls when moving focus with the TV remote
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (Object.values(ARROW_KEY_CODE).includes(e.key)) {
       showControls();
     }
@@ -273,12 +273,12 @@ function enhanceVideoPlayer(video) {
  */
 function fixVideoPlaybackIssues(video) {
   if (!video) return;
-  
+
   // Ensure video is visible
   video.style.display = 'block';
   video.style.opacity = '1';
   video.style.visibility = 'visible';
-  
+
   // Make sure the video container is visible
   const videoContainer = video.parentElement;
   if (videoContainer) {
@@ -286,10 +286,10 @@ function fixVideoPlaybackIssues(video) {
     videoContainer.style.opacity = '1';
     videoContainer.style.visibility = 'visible';
     videoContainer.style.backgroundColor = '#000'; // Black background
-    
+
     // Add a specific class to help identify it
     videoContainer.classList.add('tflix-video-container');
-    
+
     // Fix position if it's absolute or fixed to make sure it's visible
     const containerStyle = window.getComputedStyle(videoContainer);
     if (containerStyle.position === 'absolute' || containerStyle.position === 'fixed') {
@@ -300,45 +300,45 @@ function fixVideoPlaybackIssues(video) {
       videoContainer.style.zIndex = '9999';
     }
   }
-  
+
   // Ensure video can be played
   video.autoplay = true;
   video.controls = true; // Enable native controls as fallback
-  
+
   // Try to fix video size
   video.style.width = '100%';
   video.style.height = 'auto';
   video.style.maxHeight = '100vh';
   video.style.maxWidth = '100vw';
   video.style.objectFit = 'contain';
-  
+
   // Ensure proper video rendering
   video.setAttribute('playsinline', '');
-  
+
   // Check for CORS issues and add crossorigin if needed
   if (!video.hasAttribute('crossorigin')) {
     video.setAttribute('crossorigin', 'anonymous');
   }
-  
+
   // If the TV has trouble with media codecs, try to help with hints
   if (!video.hasAttribute('preload')) {
     video.setAttribute('preload', 'auto');
   }
-  
-  // Special handling for Cineby.gd
-  if (window.location.hostname.includes('cineby.gd')) {
+
+  // Special handling for Cineby.sc
+  if (window.location.hostname.includes('cineby')) {
     // Make sure we can manipulate the video
     video.setAttribute('controlsList', 'nodownload');
-    
+
     // Store a reference for our Cineby-specific handlers
     window.tflixVideoElement = video;
-    
+
     // Store the current movie page URL to use for back navigation
     window.tflixLastMovieUrl = window.location.href;
-    
+
     // Add event listeners for TV remote navigation during playback
     document.addEventListener('keydown', handleCinebyVideoKeyEvents);
-    
+
     // Force a play attempt with retry logic for Cineby
     let playAttempts = 0;
     const tryPlayVideo = () => {
@@ -353,7 +353,7 @@ function fixVideoPlaybackIssues(video) {
         }
       });
     };
-    
+
     // Start the first attempt after a delay
     setTimeout(tryPlayVideo, 1000);
   }
@@ -366,14 +366,14 @@ function fixVideoPlaybackIssues(video) {
 function handleCinebyVideoKeyEvents(e) {
   const video = window.tflixVideoElement;
   if (!video) return;
-  
+
   // Only process if we're on a video page and the video is visible
-  if (!window.location.pathname.includes('/movie/') || 
-      video.style.display === 'none' || 
-      video.style.visibility === 'hidden') {
+  if (!window.location.pathname.includes('/movie/') ||
+    video.style.display === 'none' ||
+    video.style.visibility === 'hidden') {
     return;
   }
-  
+
   switch (e.key) {
     case 'Enter':
       e.preventDefault();
@@ -389,25 +389,25 @@ function handleCinebyVideoKeyEvents(e) {
         showToast('Paused');
       }
       break;
-      
+
     case 'ArrowUp':
       e.preventDefault();
       video.volume = Math.min(1, video.volume + 0.1);
       showToast(`Volume: ${Math.round(video.volume * 100)}%`);
       break;
-      
+
     case 'ArrowDown':
       e.preventDefault();
       video.volume = Math.max(0, video.volume - 0.1);
       showToast(`Volume: ${Math.round(video.volume * 100)}%`);
       break;
-      
+
     case 'ArrowLeft':
       e.preventDefault();
       video.currentTime = Math.max(0, video.currentTime - 10);
       showToast(`- 10 seconds`);
       break;
-      
+
     case 'ArrowRight':
       e.preventDefault();
       video.currentTime = Math.min(video.duration, video.currentTime + 10);
@@ -423,15 +423,15 @@ function handleCinebyVideoKeyEvents(e) {
 function handleVideoError(e) {
   const errorMessage = getVideoErrorMessage(videoElement.error ? videoElement.error.code : 0);
   showToast(`Video error: ${errorMessage}. Trying to recover...`);
-  
+
   // Store the current video source and position
   const currentSrc = videoElement.src;
   const currentTime = videoElement.currentTime || 0;
-  
-  // Special handling for Cineby.gd
-  if (window.location.hostname.includes('cineby.gd')) {
+
+  // Special handling for Cineby.sc
+  if (window.location.hostname.includes('cineby')) {
     // For Cineby, try a more aggressive recovery approach
-    
+
     // First, check if it's just a missing source or corruption
     if (!currentSrc || currentSrc === 'undefined' || currentSrc === '') {
       // Try to find another video element that might have a valid source
@@ -452,7 +452,7 @@ function handleVideoError(e) {
       }
     }
   }
-  
+
   // Generic recovery approach
   setTimeout(() => {
     if (videoElement) {
@@ -476,7 +476,7 @@ function handleVideoError(e) {
  * @returns {string} Human-readable error message
  */
 function getVideoErrorMessage(errorCode) {
-  switch(errorCode) {
+  switch (errorCode) {
     case 1:
       return 'Fetching process aborted';
     case 2:
@@ -496,43 +496,43 @@ function getVideoErrorMessage(errorCode) {
 function createPlayerControls() {
   // First check if we already have controls
   if (playerControls) return;
-  
+
   // Create controls container
   playerControls = document.createElement('div');
   playerControls.className = 'tflix-player-controls';
-  
+
   // Create play/pause button
   const playPauseBtn = document.createElement('button');
   playPauseBtn.className = 'tflix-control-button play-pause';
   playPauseBtn.innerHTML = '⏸️';
   playPauseBtn.addEventListener('click', togglePlayPause);
-  
+
   // Create rewind button
   const rewindBtn = document.createElement('button');
   rewindBtn.className = 'tflix-control-button rewind';
   rewindBtn.innerHTML = '⏪';
   rewindBtn.addEventListener('click', () => seekRelative(-10));
-  
+
   // Create fast-forward button
   const fastForwardBtn = document.createElement('button');
   fastForwardBtn.className = 'tflix-control-button fast-forward';
   fastForwardBtn.innerHTML = '⏩';
   fastForwardBtn.addEventListener('click', () => seekRelative(10));
-  
+
   // Create progress bar
   progressBar = document.createElement('div');
   progressBar.className = 'tflix-progress-bar';
-  
+
   progressFilled = document.createElement('div');
   progressFilled.className = 'tflix-progress-filled';
   progressBar.appendChild(progressFilled);
-  
+
   // Add all elements to controls
   playerControls.appendChild(rewindBtn);
   playerControls.appendChild(playPauseBtn);
   playerControls.appendChild(progressBar);
   playerControls.appendChild(fastForwardBtn);
-  
+
   // Find video container to append controls
   const videoContainer = videoElement.parentElement;
   if (videoContainer) {
@@ -549,14 +549,14 @@ function createPlayerControls() {
  */
 function showControls() {
   if (!playerControls) return;
-  
+
   playerControls.classList.add('show');
-  
+
   // Clear any existing timeout
   if (hideControlsTimeout) {
     clearTimeout(hideControlsTimeout);
   }
-  
+
   // Set timeout to hide controls after 3 seconds
   hideControlsTimeout = setTimeout(() => {
     playerControls.classList.remove('show');
@@ -568,12 +568,12 @@ function showControls() {
  */
 function updatePlayerState() {
   if (!videoElement || !playerControls) return;
-  
+
   const playPauseBtn = playerControls.querySelector('.play-pause');
   if (playPauseBtn) {
     playPauseBtn.innerHTML = videoElement.paused ? '▶️' : '⏸️';
   }
-  
+
   showControls();
 }
 
@@ -582,7 +582,7 @@ function updatePlayerState() {
  */
 function updateProgress() {
   if (!videoElement || !progressFilled) return;
-  
+
   const percent = (videoElement.currentTime / videoElement.duration) * 100;
   progressFilled.style.width = `${percent}%`;
 }
@@ -592,25 +592,25 @@ function updateProgress() {
  */
 function onVideoEnded() {
   if (!playerControls) return;
-  
+
   const playPauseBtn = playerControls.querySelector('.play-pause');
   if (playPauseBtn) {
     playPauseBtn.innerHTML = '▶️';
   }
-  
+
   showControls();
 }
 
 // Media control functions
 function togglePlayPause() {
   if (!videoElement) return;
-  
+
   if (videoElement.paused) {
     videoElement.play();
   } else {
     videoElement.pause();
   }
-  
+
   showToast(videoElement.paused ? 'Paused' : 'Playing');
 }
 
@@ -643,12 +643,12 @@ function rewind() {
 
 function seekRelative(seconds) {
   if (!videoElement) return;
-  
+
   videoElement.currentTime = Math.max(0, Math.min(
-    videoElement.duration, 
+    videoElement.duration,
     videoElement.currentTime + seconds
   ));
-  
+
   showToast(`${seconds > 0 ? '+' : ''}${seconds} seconds`);
 }
 
@@ -659,18 +659,18 @@ function seekRelative(seconds) {
 function showToast(message) {
   // Check if a toast already exists
   let toast = document.querySelector('.tflix-toast');
-  
+
   // If not, create one
   if (!toast) {
     toast = document.createElement('div');
     toast.className = 'tflix-toast';
     document.body.appendChild(toast);
   }
-  
+
   // Update message and show
   toast.textContent = message;
   toast.classList.add('show');
-  
+
   // Hide after 2 seconds
   setTimeout(() => {
     toast.classList.remove('show');
