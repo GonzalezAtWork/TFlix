@@ -1,8 +1,8 @@
 {
-  "name": "@rogeriog/tflix",
-  "appName": "TFlix",
-  "version": "1.7.0",
-  "description": "The New TFlix transforms Cineby into a TV-friendly experience for Samsung TVs running TizenBrew with enhanced remote navigation.",
+  "name": "@rogeriog/cine",
+  "appName": "Cine",
+  "version": "1.1.0",
+  "description": "Cine transforms Cineby.sc into a TV-friendly experience for Samsung TVs running TizenBrew with enhanced remote navigation.",
   "packageType": "mods",
   "websiteURL": "https://www.cineby.sc",
   "main": "dist/userScript.js",
