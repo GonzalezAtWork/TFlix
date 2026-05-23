@@ -7,87 +7,115 @@
  * Detect and enhance content cards/items
  */
 function enhanceContentItems() {
-  const selectors = [
-    // Common movie/show card selectors - update these after inspecting the actual site
-    '.movie-card',
-    '.content-item',
-    '.film-item',
-    '.show-card',
-    // Typical class names for grid items
-    '.grid-item',
-    '.card',
-    // Image containers
-    '.poster-container',
-    '.thumbnail',
-    // Any anchors with images (likely to be content items)
-    'a:has(img)'
-  ];
+  try {
+    const selectors = [
+      // Common movie/show card selectors - update these after inspecting the actual site
+      '.movie-card',
+      '.content-item',
+      '.film-item',
+      '.show-card',
+      // Typical class names for grid items
+      '.grid-item',
+      '.card',
+      // Image containers
+      '.poster-container',
+      '.thumbnail',
+      // Any anchors with images (likely to be content items)
+      'a:has(img)'
+    ];
 
-  // Find all content items using the selectors
-  const allSelectors = selectors.join(', ');
-  const contentItems = document.querySelectorAll(allSelectors);
+    // Find all content items using the selectors
+    const allSelectors = selectors.join(', ');
+    const contentItems = document.querySelectorAll(allSelectors);
 
-  // Make each item focusable and add navigation attributes
-  contentItems.forEach((item, index) => {
-    // Ensure the item is focusable
-    if (!item.getAttribute('tabindex')) {
-      item.setAttribute('tabindex', '0');
-    }
+    // Make each item focusable and add navigation attributes
+    contentItems.forEach((item, index) => {
+      try {
+        // Ensure the item is focusable
+        if (!item.getAttribute('tabindex')) {
+          item.setAttribute('tabindex', '0');
+        }
 
-    // Add data attribute for easier selection
-    item.setAttribute('data-tflix-item', index);
+        // Add data attribute for easier selection
+        item.setAttribute('data-tflix-item', index);
 
-    // Special handling for Cineby.sc
+        // Special handling for Cineby.sc
+        if (window.location.hostname.includes('cineby')) {
+          const anchor = item.tagName === 'A' ? item : item.querySelector('a');
+          if (anchor && anchor.href && anchor.href.includes('/movie/')) {
+            // Add a special click handler for Cineby movie links
+            item.addEventListener('click', (e) => {
+              try {
+                // Make sure the link loads correctly without going to a black screen
+                e.preventDefault();
+
+                // Show loading toast
+                showVideoInfoToast('Loading movie info...');
+
+                // Navigate to the movie page
+                window.location.href = anchor.href;
+              } catch (err) {
+                console.error('TFlix: Error clicking movie link:', err);
+              }
+            });
+          } else if (item.tagName !== 'A' && !item.onclick) {
+            // Standard handling for non-anchor items
+            item.addEventListener('click', () => {
+              try {
+                // If there's an anchor inside, click it
+                const anchor = item.querySelector('a');
+                if (anchor) {
+                  anchor.click();
+                }
+              } catch (err) {
+                console.error('TFlix: Error clicking item:', err);
+              }
+            });
+          }
+        } else {
+          // Standard handling for non-Cineby sites
+          if (item.tagName !== 'A' && !item.onclick) {
+            item.addEventListener('click', () => {
+              try {
+                // If there's an anchor inside, click it
+                const anchor = item.querySelector('a');
+                if (anchor) {
+                  anchor.click();
+                }
+              } catch (err) {
+                console.error('TFlix: Error clicking item:', err);
+              }
+            });
+          }
+        }
+
+        // Add focus and blur event listeners
+        item.addEventListener('focus', () => {
+          try {
+            item.classList.add('tflix-focused');
+          } catch (err) {
+            console.error('TFlix: Error adding focus class:', err);
+          }
+        });
+
+        item.addEventListener('blur', () => {
+          try {
+            item.classList.remove('tflix-focused');
+          } catch (err) {
+            console.error('TFlix: Error removing focus class:', err);
+          }
+        });
+      } catch (e) {
+        console.error('TFlix: Error enhancing content item:', e);
+      }
+    });
+
+    // For Cineby.sc, detect and enhance play buttons specifically
     if (window.location.hostname.includes('cineby')) {
-      const anchor = item.tagName === 'A' ? item : item.querySelector('a');
-      if (anchor && anchor.href && anchor.href.includes('/movie/')) {
-        // Add a special click handler for Cineby movie links
-        item.addEventListener('click', (e) => {
-          // Make sure the link loads correctly without going to a black screen
-          e.preventDefault();
-
-          // Show loading toast
-          showVideoInfoToast('Loading movie info...');
-
-          // Navigate to the movie page
-          window.location.href = anchor.href;
-        });
-      } else if (item.tagName !== 'A' && !item.onclick) {
-        // Standard handling for non-anchor items
-        item.addEventListener('click', () => {
-          // If there's an anchor inside, click it
-          const anchor = item.querySelector('a');
-          if (anchor) {
-            anchor.click();
-          }
-        });
-      }
-    } else {
-      // Standard handling for non-Cineby sites
-      if (item.tagName !== 'A' && !item.onclick) {
-        item.addEventListener('click', () => {
-          // If there's an anchor inside, click it
-          const anchor = item.querySelector('a');
-          if (anchor) {
-            anchor.click();
-          }
-        });
-      }
+      enhanceCinebyPlayButtons();
     }
-
-    // Add focus and blur event listeners
-    item.addEventListener('focus', () => {
-      item.classList.add('tflix-focused');
-    });
-
-    item.addEventListener('blur', () => {
-      item.classList.remove('tflix-focused');
-    });
-  });
-
-  // For Cineby.sc, detect and enhance play buttons specifically
-  if (window.location.hostname.includes('cineby')) {
-    enhanceCinebyPlayButtons();
+  } catch (e) {
+    console.error('TFlix: Error enhancing content items:', e);
   }
 }
 
@@ -506,90 +534,93 @@ function showVideoInfoToast(message) {
  * Enhance play buttons specifically for Cineby.sc
  */
 function enhanceCinebyPlayButtons() {
-  // Only run on movie info pages
-  if (!window.location.pathname.includes('/movie/')) return;
+  try {
+    // Only run on movie info pages
+    if (!window.location.pathname.includes('/movie/')) return;
 
-  // Common selectors for play buttons
-  const playButtonSelectors = [
-    'button:contains("Play")',
-    'button:contains("Watch")',
-    'a:contains("Play")',
-    'a:contains("Watch")',
-    '.play-button',
-    '.watch-button',
-    '.play-icon',
-    'button[aria-label*="play" i]',
-    'button[aria-label*="watch" i]',
-    // Any element that might be a play button
-    '[class*="play" i]',
-    '[class*="watch" i]',
-    '[id*="play" i]',
-    '[id*="watch" i]',
-    // Find button elements by their icon content
-    'button svg',
-    'a svg'
-  ];
+    // Look for potential play buttons
+    const allButtons = document.querySelectorAll('button, a, div[role="button"]');
 
-  // Look for potential play buttons
-  const allButtons = document.querySelectorAll('button, a, div[role="button"]');
+    allButtons.forEach(button => {
+      try {
+        // Check if it's likely a play button
+        const isPlayButton =
+          button.textContent?.toLowerCase().includes('play') ||
+          button.textContent?.toLowerCase().includes('watch') ||
+          button.getAttribute('aria-label')?.toLowerCase().includes('play') ||
+          button.getAttribute('aria-label')?.toLowerCase().includes('watch') ||
+          button.classList.contains('play-button') ||
+          button.classList.contains('watch-button') ||
+          button.id?.toLowerCase().includes('play') ||
+          button.id?.toLowerCase().includes('watch') ||
+          button.querySelector('svg') || // Might be an icon button
+          button.querySelector('i[class*="play" i]');
 
-  allButtons.forEach(button => {
-    // Check if it's likely a play button
-    const isPlayButton =
-      button.textContent?.toLowerCase().includes('play') ||
-      button.textContent?.toLowerCase().includes('watch') ||
-      button.getAttribute('aria-label')?.toLowerCase().includes('play') ||
-      button.getAttribute('aria-label')?.toLowerCase().includes('watch') ||
-      button.classList.contains('play-button') ||
-      button.classList.contains('watch-button') ||
-      button.id?.toLowerCase().includes('play') ||
-      button.id?.toLowerCase().includes('watch') ||
-      button.querySelector('svg') || // Might be an icon button
-      button.querySelector('i[class*="play" i]');
+        if (isPlayButton) {
+          // Make sure it's focusable
+          button.setAttribute('tabindex', '0');
+          button.setAttribute('data-tflix-play-button', 'true');
 
-    if (isPlayButton) {
-      // Make sure it's focusable
-      button.setAttribute('tabindex', '0');
-      button.setAttribute('data-tflix-play-button', 'true');
+          // Add clear visual styling
+          button.classList.add('tflix-play-button');
 
-      // Add clear visual styling
-      button.classList.add('tflix-play-button');
+          // Special handling for play button clicks
+          button.addEventListener('click', (e) => {
+            try {
+              e.preventDefault();
 
-      // Special handling for play button clicks
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
+              // Show loading toast
+              showVideoInfoToast('Starting playback...');
 
-        // Show loading toast
-        showVideoInfoToast('Starting playback...');
+              // We need to let the original click go through, but prepare
+              // for the video to appear and be enhanced
+              setupCinebyVideoMonitor();
 
-        // We need to let the original click go through, but prepare
-        // for the video to appear and be enhanced
-        setupCinebyVideoMonitor();
-
-        // Allow the default click to continue after a tiny delay
-        setTimeout(() => {
-          if (button.tagName === 'A' && button.href) {
-            window.location.href = button.href;
-          } else {
-            // Trigger the original click handler
-            const originalClick = button.onclick;
-            if (originalClick) {
-              originalClick.call(button);
+              // Allow the default click to continue after a tiny delay
+              setTimeout(() => {
+                try {
+                  if (button.tagName === 'A' && button.href) {
+                    window.location.href = button.href;
+                  } else {
+                    // Trigger the original click handler
+                    const originalClick = button.onclick;
+                    if (originalClick) {
+                      originalClick.call(button);
+                    }
+                  }
+                } catch (err) {
+                  console.error('TFlix: Error handling play button click:', err);
+                }
+              }, 50);
+            } catch (err) {
+              console.error('TFlix: Error in play button click handler:', err);
             }
-          }
-        }, 50);
-      });
+          });
 
-      // Add focus effect
-      button.addEventListener('focus', () => {
-        button.classList.add('tflix-focused');
-      });
+          // Add focus effect
+          button.addEventListener('focus', () => {
+            try {
+              button.classList.add('tflix-focused');
+            } catch (err) {
+              console.error('TFlix: Error adding focus to play button:', err);
+            }
+          });
 
-      button.addEventListener('blur', () => {
-        button.classList.remove('tflix-focused');
-      });
-    }
-  });
+          button.addEventListener('blur', () => {
+            try {
+              button.classList.remove('tflix-focused');
+            } catch (err) {
+              console.error('TFlix: Error removing focus from play button:', err);
+            }
+          });
+        }
+      } catch (e) {
+        console.error('TFlix: Error enhancing play button:', e);
+      }
+    });
+  } catch (e) {
+    console.error('TFlix: Error enhancing Cineby play buttons:', e);
+  }
 }
 
 /**
@@ -597,93 +628,149 @@ function enhanceCinebyPlayButtons() {
  * to ensure video plays correctly after clicking play
  */
 function setupCinebyVideoMonitor() {
-  // Keep track of the current movie page URL
-  window.tflixLastMovieUrl = window.location.href;
+  try {
+    // Keep track of the current movie page URL
+    window.tflixLastMovieUrl = window.location.href;
 
-  // Create a more aggressive observer to catch when the video player appears
-  const videoObserver = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.addedNodes.length) {
-        for (const node of mutation.addedNodes) {
-          // Look for video elements or containers
-          if (node.nodeName === 'VIDEO' ||
-            (node.querySelector && node.querySelector('video')) ||
-            (node.classList &&
-              (node.classList.contains('player') ||
-                node.classList.contains('video-player') ||
-                node.classList.contains('player-container')))) {
+    // Create a more aggressive observer to catch when the video player appears
+    const videoObserver = new MutationObserver((mutations) => {
+      try {
+        for (const mutation of mutations) {
+          if (mutation.addedNodes.length) {
+            for (const node of mutation.addedNodes) {
+              try {
+                // Look for video elements or containers
+                if (node.nodeName === 'VIDEO' ||
+                  (node.querySelector && node.querySelector('video')) ||
+                  (node.classList &&
+                    (node.classList.contains('player') ||
+                      node.classList.contains('video-player') ||
+                      node.classList.contains('player-container')))) {
 
-            // Found a potential video player
-            const video = node.nodeName === 'VIDEO' ?
-              node : node.querySelector('video');
+                  // Found a potential video player
+                  const video = node.nodeName === 'VIDEO' ?
+                    node : node.querySelector('video');
 
-            if (video) {
-              // Apply enhanced video controls
-              setupVideoPlayerControls(video);
+                  if (video) {
+                    // Apply enhanced video controls
+                    setupVideoPlayerControls(video);
 
-              // Ensure it plays
-              setTimeout(() => {
-                if (video.paused) {
-                  video.play().catch(() => {
-                    // Silent error handling
-                    showVideoInfoToast('Press Enter to play');
-                  });
+                    // Ensure it plays
+                    setTimeout(() => {
+                      try {
+                        if (video.paused) {
+                          video.play().catch(() => {
+                            // Silent error handling
+                            showVideoInfoToast('Press Enter to play');
+                          });
+                        }
+                      } catch (err) {
+                        console.error('TFlix: Error attempting to play video:', err);
+                      }
+                    }, 1000);
+                  }
                 }
-              }, 1000);
+              } catch (e) {
+                console.error('TFlix: Error checking video node:', e);
+              }
             }
           }
         }
+      } catch (e) {
+        console.error('TFlix: Error in video observer:', e);
       }
-    }
-  });
+    });
 
-  // Start observing
-  videoObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['style', 'class']
-  });
+    // Start observing
+    videoObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
 
-  // Set a timeout to disconnect the observer after 10 seconds
-  setTimeout(() => {
-    videoObserver.disconnect();
-  }, 10000);
+    // Set a timeout to disconnect the observer after 10 seconds
+    setTimeout(() => {
+      try {
+        videoObserver.disconnect();
+      } catch (e) {
+        console.error('TFlix: Error disconnecting video observer:', e);
+      }
+    }, 10000);
+  } catch (e) {
+    console.error('TFlix: Error setting up video monitor:', e);
+  }
 }
 
 /**
  * Initialize content enhancements
  */
 function initializeContentEnhancements() {
-  // First run
-  detectAndEnhanceContent();
-
-  // Set up observer to continue detecting as the DOM changes
-  const observer = new MutationObserver(() => {
+  try {
+    // First run
     detectAndEnhanceContent();
-  });
 
-  // Start observing document body for DOM changes
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+    // Set up observer to continue detecting as the DOM changes
+    const observer = new MutationObserver(() => {
+      try {
+        detectAndEnhanceContent();
+      } catch (e) {
+        console.error('TFlix: Error detecting and enhancing content:', e);
+      }
+    });
+
+    // Start observing document body for DOM changes
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  } catch (e) {
+    console.error('TFlix: Error initializing content enhancements:', e);
+  }
 }
 
 /**
  * Detect and enhance content based on current DOM
  */
 function detectAndEnhanceContent() {
-  enhanceContentItems();
-  enhanceNavigationMenus();
-  enhanceVideoPlayer();
-  enhanceSearchFunctionality();
-  enhanceCinebyVideoPlayer();
+  try {
+    enhanceContentItems();
+  } catch (e) {
+    console.error('TFlix: Error enhancing content items:', e);
+  }
+
+  try {
+    enhanceNavigationMenus();
+  } catch (e) {
+    console.error('TFlix: Error enhancing navigation menus:', e);
+  }
+
+  try {
+    enhanceVideoPlayer();
+  } catch (e) {
+    console.error('TFlix: Error enhancing video player:', e);
+  }
+
+  try {
+    enhanceSearchFunctionality();
+  } catch (e) {
+    console.error('TFlix: Error enhancing search functionality:', e);
+  }
+
+  try {
+    enhanceCinebyVideoPlayer();
+  } catch (e) {
+    console.error('TFlix: Error enhancing Cineby video player:', e);
+  }
 
   // Special handling for Cineby.sc on movie info pages
   if (window.location.hostname.includes('cineby') &&
     window.location.pathname.includes('/movie/')) {
-    enhanceCinebyPlayButtons();
+    try {
+      enhanceCinebyPlayButtons();
+    } catch (e) {
+      console.error('TFlix: Error enhancing Cineby play buttons:', e);
+    }
   }
 }
 

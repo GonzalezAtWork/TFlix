@@ -11,22 +11,26 @@ let hideControlsTimeout = null;
  * Initialize UI enhancements when DOM is loaded
  */
 function initializeUI() {
-  // Add CSS to head
-  const style = document.createElement('style');
-  style.textContent = css;
-  document.head.appendChild(style);
+  try {
+    // Add CSS to head
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
 
-  // Enable navigation mode
-  document.body.classList.add('tflix-navigation-mode');
+    // Enable navigation mode
+    document.body.classList.add('tflix-navigation-mode');
 
-  // Initialize focus on a logical starting element
-  initializeFocus();
+    // Initialize focus on a logical starting element
+    initializeFocus();
 
-  // Setup event listeners for media control keys
-  setupMediaControlListeners();
+    // Setup event listeners for media control keys
+    setupMediaControlListeners();
 
-  // Initialize video player enhancements when a video is played
-  setupVideoPlayerObserver();
+    // Initialize video player enhancements when a video is played
+    setupVideoPlayerObserver();
+  } catch (e) {
+    console.error('TFlix: Error initializing UI:', e);
+  }
 }
 
 /**
@@ -79,39 +83,43 @@ function ensureElementIsVisible(element) {
  */
 function setupMediaControlListeners() {
   document.addEventListener('keydown', function (e) {
-    // Handle media control keys
-    switch (e.key) {
-      case 'MediaPlayPause':
-        togglePlayPause();
-        break;
-      case 'MediaPlay':
-        play();
-        break;
-      case 'MediaPause':
-        pause();
-        break;
-      case 'MediaStop':
-        stop();
-        break;
-      case 'MediaFastForward':
-        fastForward();
-        break;
-      case 'MediaRewind':
-        rewind();
-        break;
-      case 'MediaTrackNext':
-        // Jump forward 10 seconds
-        seekRelative(10);
-        break;
-      case 'MediaTrackPrevious':
-        // Jump backward 10 seconds
-        seekRelative(-10);
-        break;
-      case 'Back':
-      case 'XF86Back':
-        // Handle back button press
-        handleBackButton(e);
-        break;
+    try {
+      // Handle media control keys
+      switch (e.key) {
+        case 'MediaPlayPause':
+          togglePlayPause();
+          break;
+        case 'MediaPlay':
+          play();
+          break;
+        case 'MediaPause':
+          pause();
+          break;
+        case 'MediaStop':
+          stop();
+          break;
+        case 'MediaFastForward':
+          fastForward();
+          break;
+        case 'MediaRewind':
+          rewind();
+          break;
+        case 'MediaTrackNext':
+          // Jump forward 10 seconds
+          seekRelative(10);
+          break;
+        case 'MediaTrackPrevious':
+          // Jump backward 10 seconds
+          seekRelative(-10);
+          break;
+        case 'Back':
+        case 'XF86Back':
+          // Handle back button press
+          handleBackButton(e);
+          break;
+      }
+    } catch (error) {
+      console.error('TFlix: Error handling media control key:', error);
     }
   });
 }
@@ -202,38 +210,65 @@ function handleBackButton(e) {
  * Setup MutationObserver to detect when a video player is added to the DOM
  */
 function setupVideoPlayerObserver() {
-  // Create an observer instance
-  const observer = new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      if (mutation.addedNodes.length) {
-        // Check if a video element was added
-        const addedVideo = Array.from(mutation.addedNodes).find(node =>
-          node.nodeName === 'VIDEO' ||
-          (node.querySelector && node.querySelector('video'))
-        );
+  try {
+    // Create an observer instance with optimized options
+    const observer = new MutationObserver(function (mutations) {
+      try {
+        mutations.forEach(function (mutation) {
+          try {
+            if (mutation.addedNodes && mutation.addedNodes.length) {
+              // Check if a video element was added
+              const addedVideo = Array.from(mutation.addedNodes).find(node => {
+                try {
+                  return node.nodeName === 'VIDEO' ||
+                    (node.querySelector && node.querySelector('video'));
+                } catch (e) {
+                  return false;
+                }
+              });
 
-        if (addedVideo) {
-          videoElement = addedVideo.nodeName === 'VIDEO' ?
-            addedVideo : addedVideo.querySelector('video');
+              if (addedVideo) {
+                try {
+                  videoElement = addedVideo.nodeName === 'VIDEO' ?
+                    addedVideo : addedVideo.querySelector('video');
 
-          if (videoElement) {
-            enhanceVideoPlayer(videoElement);
+                  if (videoElement) {
+                    enhanceVideoPlayer(videoElement);
+                  }
+                } catch (e) {
+                  console.error('TFlix: Error processing video element:', e);
+                }
+              }
+            }
+          } catch (e) {
+            console.error('TFlix: Error in mutation callback:', e);
           }
-        }
+        });
+      } catch (e) {
+        console.error('TFlix: Error processing mutations:', e);
       }
     });
-  });
 
-  // Start observing the document body for DOM changes
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+    // Start observing the document body for DOM changes with optimized options
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      // Don't monitor other attributes to improve performance
+      attributes: false,
+      characterData: false
+    });
 
-  // Also check for existing video elements
-  videoElement = document.querySelector('video');
-  if (videoElement) {
-    enhanceVideoPlayer(videoElement);
+    // Also check for existing video elements
+    try {
+      videoElement = document.querySelector('video');
+      if (videoElement) {
+        enhanceVideoPlayer(videoElement);
+      }
+    } catch (e) {
+      console.error('TFlix: Error finding existing video element:', e);
+    }
+  } catch (e) {
+    console.error('TFlix: Error setting up video player observer:', e);
   }
 }
 
@@ -242,29 +277,41 @@ function setupVideoPlayerObserver() {
  * @param {HTMLElement} video - The video element to enhance
  */
 function enhanceVideoPlayer(video) {
-  videoElement = video;
+  try {
+    if (!video) return;
 
-  // Fix common video playback issues
-  fixVideoPlaybackIssues(video);
+    videoElement = video;
 
-  // Create custom player controls
-  createPlayerControls();
+    // Fix common video playback issues
+    fixVideoPlaybackIssues(video);
 
-  // Add event listeners for video element
-  videoElement.addEventListener('play', updatePlayerState);
-  videoElement.addEventListener('pause', updatePlayerState);
-  videoElement.addEventListener('timeupdate', updateProgress);
-  videoElement.addEventListener('ended', onVideoEnded);
+    // Create custom player controls
+    createPlayerControls();
 
-  // Add error handling
-  videoElement.addEventListener('error', handleVideoError);
-
-  // Show controls when moving focus with the TV remote
-  document.addEventListener('keydown', function (e) {
-    if (Object.values(ARROW_KEY_CODE).includes(e.key)) {
-      showControls();
+    // Add event listeners for video element
+    try {
+      video.addEventListener('play', updatePlayerState);
+      video.addEventListener('pause', updatePlayerState);
+      video.addEventListener('timeupdate', updateProgress);
+      video.addEventListener('ended', onVideoEnded);
+      video.addEventListener('error', handleVideoError);
+    } catch (e) {
+      console.error('TFlix: Error adding video event listeners:', e);
     }
-  });
+
+    // Show controls when moving focus with the TV remote
+    document.addEventListener('keydown', function (e) {
+      try {
+        if (Object.values(ARROW_KEY_CODE).includes(e.key)) {
+          showControls();
+        }
+      } catch (err) {
+        console.error('TFlix: Error in keyboard handler:', err);
+      }
+    });
+  } catch (e) {
+    console.error('TFlix: Error enhancing video player:', e);
+  }
 }
 
 /**
@@ -274,88 +321,100 @@ function enhanceVideoPlayer(video) {
 function fixVideoPlaybackIssues(video) {
   if (!video) return;
 
-  // Ensure video is visible
-  video.style.display = 'block';
-  video.style.opacity = '1';
-  video.style.visibility = 'visible';
+  try {
+    // Ensure video is visible
+    video.style.display = 'block';
+    video.style.opacity = '1';
+    video.style.visibility = 'visible';
 
-  // Make sure the video container is visible
-  const videoContainer = video.parentElement;
-  if (videoContainer) {
-    videoContainer.style.display = 'block';
-    videoContainer.style.opacity = '1';
-    videoContainer.style.visibility = 'visible';
-    videoContainer.style.backgroundColor = '#000'; // Black background
+    // Make sure the video container is visible
+    const videoContainer = video.parentElement;
+    if (videoContainer) {
+      videoContainer.style.display = 'block';
+      videoContainer.style.opacity = '1';
+      videoContainer.style.visibility = 'visible';
+      videoContainer.style.backgroundColor = '#000'; // Black background
 
-    // Add a specific class to help identify it
-    videoContainer.classList.add('tflix-video-container');
+      // Add a specific class to help identify it
+      videoContainer.classList.add('tflix-video-container');
 
-    // Fix position if it's absolute or fixed to make sure it's visible
-    const containerStyle = window.getComputedStyle(videoContainer);
-    if (containerStyle.position === 'absolute' || containerStyle.position === 'fixed') {
-      videoContainer.style.top = '0';
-      videoContainer.style.left = '0';
-      videoContainer.style.width = '100%';
-      videoContainer.style.height = '100%';
-      videoContainer.style.zIndex = '9999';
+      // Fix position if it's absolute or fixed to make sure it's visible
+      const containerStyle = window.getComputedStyle(videoContainer);
+      if (containerStyle.position === 'absolute' || containerStyle.position === 'fixed') {
+        videoContainer.style.top = '0';
+        videoContainer.style.left = '0';
+        videoContainer.style.width = '100%';
+        videoContainer.style.height = '100%';
+        videoContainer.style.zIndex = '9999';
+      }
     }
-  }
 
-  // Ensure video can be played
-  video.autoplay = true;
-  video.controls = true; // Enable native controls as fallback
+    // Ensure video can be played
+    video.autoplay = true;
+    video.controls = true; // Enable native controls as fallback
 
-  // Try to fix video size
-  video.style.width = '100%';
-  video.style.height = 'auto';
-  video.style.maxHeight = '100vh';
-  video.style.maxWidth = '100vw';
-  video.style.objectFit = 'contain';
+    // Try to fix video size
+    video.style.width = '100%';
+    video.style.height = 'auto';
+    video.style.maxHeight = '100vh';
+    video.style.maxWidth = '100vw';
+    video.style.objectFit = 'contain';
 
-  // Ensure proper video rendering
-  video.setAttribute('playsinline', '');
+    // Ensure proper video rendering
+    video.setAttribute('playsinline', '');
 
-  // Check for CORS issues and add crossorigin if needed
-  if (!video.hasAttribute('crossorigin')) {
-    video.setAttribute('crossorigin', 'anonymous');
-  }
+    // Check for CORS issues and add crossorigin if needed
+    if (!video.hasAttribute('crossorigin')) {
+      video.setAttribute('crossorigin', 'anonymous');
+    }
 
-  // If the TV has trouble with media codecs, try to help with hints
-  if (!video.hasAttribute('preload')) {
-    video.setAttribute('preload', 'auto');
-  }
+    // If the TV has trouble with media codecs, try to help with hints
+    if (!video.hasAttribute('preload')) {
+      video.setAttribute('preload', 'auto');
+    }
 
-  // Special handling for Cineby.sc
-  if (window.location.hostname.includes('cineby')) {
-    // Make sure we can manipulate the video
-    video.setAttribute('controlsList', 'nodownload');
+    // Special handling for Cineby.sc
+    if (window.location.hostname.includes('cineby')) {
+      try {
+        // Make sure we can manipulate the video
+        video.setAttribute('controlsList', 'nodownload');
 
-    // Store a reference for our Cineby-specific handlers
-    window.tflixVideoElement = video;
+        // Store a reference for our Cineby-specific handlers
+        window.tflixVideoElement = video;
 
-    // Store the current movie page URL to use for back navigation
-    window.tflixLastMovieUrl = window.location.href;
+        // Store the current movie page URL to use for back navigation
+        window.tflixLastMovieUrl = window.location.href;
 
-    // Add event listeners for TV remote navigation during playback
-    document.addEventListener('keydown', handleCinebyVideoKeyEvents);
+        // Add event listeners for TV remote navigation during playback
+        document.addEventListener('keydown', handleCinebyVideoKeyEvents);
 
-    // Force a play attempt with retry logic for Cineby
-    let playAttempts = 0;
-    const tryPlayVideo = () => {
-      video.play().catch(() => {
-        playAttempts++;
-        if (playAttempts < 5) {
-          // Try again with exponential backoff
-          setTimeout(tryPlayVideo, playAttempts * 500);
-        } else {
-          // Show a toast after several failed attempts
-          showToast('Press Enter to start playback');
-        }
-      });
-    };
+        // Force a play attempt with retry logic for Cineby
+        let playAttempts = 0;
+        const tryPlayVideo = () => {
+          try {
+            video.play().catch(() => {
+              playAttempts++;
+              if (playAttempts < 5) {
+                // Try again with exponential backoff
+                setTimeout(tryPlayVideo, playAttempts * 500);
+              } else {
+                // Show a toast after several failed attempts
+                showToast('Press Enter to start playback');
+              }
+            });
+          } catch (e) {
+            console.error('TFlix: Error attempting to play video:', e);
+          }
+        };
 
-    // Start the first attempt after a delay
-    setTimeout(tryPlayVideo, 1000);
+        // Start the first attempt after a delay
+        setTimeout(tryPlayVideo, 1000);
+      } catch (e) {
+        console.error('TFlix: Error in Cineby video handling:', e);
+      }
+    }
+  } catch (e) {
+    console.error('TFlix: Error fixing video playback issues:', e);
   }
 }
 
@@ -364,55 +423,59 @@ function fixVideoPlaybackIssues(video) {
  * @param {Event} e - Remote control event
  */
 function handleCinebyVideoKeyEvents(e) {
-  const video = window.tflixVideoElement;
-  if (!video) return;
+  try {
+    const video = window.tflixVideoElement;
+    if (!video) return;
 
-  // Only process if we're on a video page and the video is visible
-  if (!window.location.pathname.includes('/movie/') ||
-    video.style.display === 'none' ||
-    video.style.visibility === 'hidden') {
-    return;
-  }
+    // Only process if we're on a video page and the video is visible
+    if (!window.location.pathname.includes('/movie/') ||
+      video.style.display === 'none' ||
+      video.style.visibility === 'hidden') {
+      return;
+    }
 
-  switch (e.key) {
-    case 'Enter':
-      e.preventDefault();
-      if (video.paused) {
-        // Show attempt to play toast
-        showToast('Starting playback...');
-        video.play().catch(() => {
-          // If it fails, show error
-          showToast('Unable to play. Try pressing Back and selecting again.');
-        });
-      } else {
-        video.pause();
-        showToast('Paused');
-      }
-      break;
+    switch (e.key) {
+      case 'Enter':
+        e.preventDefault();
+        if (video.paused) {
+          // Show attempt to play toast
+          showToast('Starting playback...');
+          video.play().catch(() => {
+            // If it fails, show error
+            showToast('Unable to play. Try pressing Back and selecting again.');
+          });
+        } else {
+          video.pause();
+          showToast('Paused');
+        }
+        break;
 
-    case 'ArrowUp':
-      e.preventDefault();
-      video.volume = Math.min(1, video.volume + 0.1);
-      showToast(`Volume: ${Math.round(video.volume * 100)}%`);
-      break;
+      case 'ArrowUp':
+        e.preventDefault();
+        video.volume = Math.min(1, video.volume + 0.1);
+        showToast(`Volume: ${Math.round(video.volume * 100)}%`);
+        break;
 
-    case 'ArrowDown':
-      e.preventDefault();
-      video.volume = Math.max(0, video.volume - 0.1);
-      showToast(`Volume: ${Math.round(video.volume * 100)}%`);
-      break;
+      case 'ArrowDown':
+        e.preventDefault();
+        video.volume = Math.max(0, video.volume - 0.1);
+        showToast(`Volume: ${Math.round(video.volume * 100)}%`);
+        break;
 
-    case 'ArrowLeft':
-      e.preventDefault();
-      video.currentTime = Math.max(0, video.currentTime - 10);
-      showToast(`- 10 seconds`);
-      break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        video.currentTime = Math.max(0, video.currentTime - 10);
+        showToast(`- 10 seconds`);
+        break;
 
-    case 'ArrowRight':
-      e.preventDefault();
-      video.currentTime = Math.min(video.duration, video.currentTime + 10);
-      showToast(`+ 10 seconds`);
-      break;
+      case 'ArrowRight':
+        e.preventDefault();
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        showToast(`+ 10 seconds`);
+        break;
+    }
+  } catch (e) {
+    console.error('TFlix: Error handling Cineby video key event:', e);
   }
 }
 
@@ -421,53 +484,71 @@ function handleCinebyVideoKeyEvents(e) {
  * @param {Event} e - Error event
  */
 function handleVideoError(e) {
-  const errorMessage = getVideoErrorMessage(videoElement.error ? videoElement.error.code : 0);
-  showToast(`Video error: ${errorMessage}. Trying to recover...`);
+  try {
+    if (!videoElement) return;
 
-  // Store the current video source and position
-  const currentSrc = videoElement.src;
-  const currentTime = videoElement.currentTime || 0;
+    const errorMessage = getVideoErrorMessage(videoElement.error ? videoElement.error.code : 0);
+    showToast(`Video error: ${errorMessage}. Trying to recover...`);
 
-  // Special handling for Cineby.sc
-  if (window.location.hostname.includes('cineby')) {
-    // For Cineby, try a more aggressive recovery approach
+    // Store the current video source and position
+    const currentSrc = videoElement.src;
+    const currentTime = videoElement.currentTime || 0;
 
-    // First, check if it's just a missing source or corruption
-    if (!currentSrc || currentSrc === 'undefined' || currentSrc === '') {
-      // Try to find another video element that might have a valid source
-      const otherVideos = Array.from(document.querySelectorAll('video')).filter(v => v !== videoElement);
-      if (otherVideos.length > 0) {
-        for (const video of otherVideos) {
-          if (video.src && video.src !== '') {
-            videoElement.src = video.src;
-            videoElement.load();
-            videoElement.currentTime = currentTime;
-            videoElement.play().catch(() => {
-              // If still fails, try reloading the page
-              showToast('Still having trouble. Try using the back button and selecting again.');
-            });
-            return;
+    // Special handling for Cineby.sc
+    if (window.location.hostname.includes('cineby')) {
+      try {
+        // For Cineby, try a more aggressive recovery approach
+
+        // First, check if it's just a missing source or corruption
+        if (!currentSrc || currentSrc === 'undefined' || currentSrc === '') {
+          // Try to find another video element that might have a valid source
+          const otherVideos = Array.from(document.querySelectorAll('video')).filter(v => v !== videoElement);
+          if (otherVideos.length > 0) {
+            for (const video of otherVideos) {
+              if (video.src && video.src !== '') {
+                videoElement.src = video.src;
+                videoElement.load();
+                videoElement.currentTime = currentTime;
+                videoElement.play().catch(() => {
+                  // If still fails, try reloading the page
+                  showToast('Still having trouble. Try using the back button and selecting again.');
+                });
+                return;
+              }
+            }
           }
         }
+      } catch (err) {
+        console.error('TFlix: Error in Cineby video recovery:', err);
       }
     }
-  }
 
-  // Generic recovery approach
-  setTimeout(() => {
-    if (videoElement) {
-      // Try reloading the video
-      videoElement.src = '';
-      setTimeout(() => {
-        videoElement.src = currentSrc;
-        videoElement.load();
-        videoElement.currentTime = currentTime;
-        videoElement.play().catch(() => {
-          showToast('Could not play video. Try exiting and selecting again.');
-        });
-      }, 1000);
-    }
-  }, 2000);
+    // Generic recovery approach
+    setTimeout(() => {
+      try {
+        if (videoElement) {
+          // Try reloading the video
+          videoElement.src = '';
+          setTimeout(() => {
+            try {
+              videoElement.src = currentSrc;
+              videoElement.load();
+              videoElement.currentTime = currentTime;
+              videoElement.play().catch(() => {
+                showToast('Could not play video. Try exiting and selecting again.');
+              });
+            } catch (err) {
+              console.error('TFlix: Error recovering video:', err);
+            }
+          }, 1000);
+        }
+      } catch (err) {
+        console.error('TFlix: Error in video recovery:', err);
+      }
+    }, 2000);
+  } catch (e) {
+    console.error('TFlix: Error handling video error:', e);
+  }
 }
 
 /**

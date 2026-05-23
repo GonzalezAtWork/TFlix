@@ -21,7 +21,7 @@ TFlix is a TizenBrew module that transforms [Cineby.sc](https://www.cineby.sc/) 
 ### Installing from npm (Recommended)
 
 1. On your TV with TizenBrew installed, navigate to the Package Manager
-2. Search for "@zyrecx/tflix"
+2. Search for "@rogeriog/tflix"
 3. Select and install the package
 
 ### Manual Installation
